@@ -8,7 +8,7 @@ seedItems := ["Carrot Seed", "Strawberry Seed", "Blueberry Seed", "Orange Tulip"
              , "Tomato Seed", "Corn Seed", "Daffodil Seed", "Watermelon Seed"
              , "Pumpkin Seed", "Apple Seed", "Bamboo Seed", "Coconut Seed"
              , "Cactus Seed", "Dragon Fruit Seed", "Mango Seed", "Grape Seed"
-             , "Mushroom Seed", "Pepper Seed", "Cacao Seed", "Beanstalk Seed", "Ember Lily"] 
+             , "Mushroom Seed", "Pepper Seed", "Cacao Seed", "Beanstalk Seed", "Ember Lily", "Sugar Apple"] 
 
              
 
@@ -110,7 +110,8 @@ createCheckboxLayout(itemArray, prefix) {
             checkboxY := textY + 25 + (A_Index - maxCheckboxesPerColumn - 1) * 20
         }
         
-        Gui, Add, Checkbox, v%prefix%%A_Index% x%checkboxX% y%checkboxY%, % itemArray[A_Index]
+        varName := prefix . A_Index
+        Gui, Add, Checkbox, v%varName% x%checkboxX% y%checkboxY%, % itemArray[A_Index]
     }
 }
 
@@ -165,21 +166,92 @@ setupPosition(){
         rotateShops()
     }
 }
+resetUINav(
+    sendKeybind("\")
+    sendKeybind("\")
+)
+returnToGarden(){
+
+}
+
+buyItem(){
+    sendKeybind("Enter")
+    sendKeybind("Down")
+    Loop, 20
+        {
+            sendKeybind("Enter", 100)
+        }
+    sendKeybind("Down")
+}
+
+skipItem(){
+    sendKeybind("Enter")
+    sendKeybind("Down")
+    sendKeybind("Down")
+}
+
+; SEEDS
+buySeeds(){
+    global
+    sendKeybind("e", 3000)
+    Loop, 30
+        {  
+            sendKeybind("Down", 50)
+        }
+    Loop, 50
+        {
+            sendKeybind("Up", 50)
+        }
+
+    
+    sendKeybind("Down")
+    sendKeybind("Down") 
 
 
+    Loop, % seedItems.MaxIndex()
+    {
+        ; Variable name is Seed1, Seed2, Seed3, corresponding to the checkboxes
+        varName := "Seed" . A_Index
+        if (%varName%) {
+
+            buyItem()
+        
+        } else {
+            skipItem()
+
+        }
+    }
+
+    Loop, 50
+        {
+            sendKeybind("Up", 50)
+        }
+
+        
+    ; Go down to carrot to reset, then exit menu
+    sendKeybind("Down")
+    sendKeybind("Down") 
+    sendKeybind("Enter")
+    sendKeybind("Enter")
+    sendKeybind("Up")
+    sendKeybind("Enter")
+    ;Return to garden
+    sendKeybind("Left")
+    sendKeybind("Enter")
+
+}
 
 startFunction() {
     Gui, Submit, NoHide
-    global interval := Interval
-    global carrotEnabled := Carrot
-    global appleEnabled := Apple
-    global blueberryEnabled := Blueberry
-    global mangoEnabled := Mango
-    global bananaEnabled := Banana
-    
+
+
     changeCameraMode()
     setupPosition()
-  
+    changeCameraMode()
+
+
+    buySeeds()
+
     Sleep, 100
     GuiControl,, Status, Status: Sequence Complete
 }
