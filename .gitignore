@@ -1,0 +1,58 @@
+# AutoHotkey specific files
+*.ahk.bak
+*.ahk.tmp
+*.ahk~
+*.ahk.log
+
+# Compiled AutoHotkey executables
+*.exe
+
+# AutoHotkey temporary files
+~$*.ahk
+*.tmp
+
+# Old folder
+old/
+old/*
+./old
+# Windows specific
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+logs/
+
+# Backup files
+*.bak
+*.backup
+
+# Temporary files
+temp/
+tmp/
+*.tmp
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Icon?
+
+
+*.exe
+*.com
+
+# User-specific settings
+settings.ini
+config.ini
