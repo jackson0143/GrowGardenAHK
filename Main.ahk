@@ -115,7 +115,7 @@ createCheckboxLayout(itemArray, prefix) {
     }
 }
 
-sendKeybind(keybind, delay := 500) {
+sendKeybind(keybind, delay := 250){
     if (keybind = "\") {
         Send, \
     }
@@ -166,10 +166,36 @@ setupPosition(){
         rotateShops()
     }
 }
-resetUINav(
+resetSelectedPosition(){
+    Loop, 30
+        {  
+            sendKeybind("Down", 50)
+        }
+    Loop, 50
+        {
+            sendKeybind("Up", 50)
+        }
+        sendKeybind("Down")
+        sendKeybind("Down") 
+}
+resetCamera(){
+    Sleep, 300
+    Loop, 40
+        {
+            sendKeybind("WheelUp", 50)
+        }
+    
+     
+      Loop, 4
+          {
+              sendKeybind("WheelDown", 50)
+          }
+    Sleep,300
+}
+resetUINav(){
     sendKeybind("\")
     sendKeybind("\")
-)
+}
 returnToGarden(){
 
 }
@@ -177,9 +203,9 @@ returnToGarden(){
 buyItem(){
     sendKeybind("Enter")
     sendKeybind("Down")
-    Loop, 20
+    Loop, 30
         {
-            sendKeybind("Enter", 100)
+            sendKeybind("Enter", 70)
         }
     sendKeybind("Down")
 }
@@ -193,20 +219,10 @@ skipItem(){
 ; SEEDS
 buySeeds(){
     global
+    Sleep, 500
     sendKeybind("e", 3000)
-    Loop, 30
-        {  
-            sendKeybind("Down", 50)
-        }
-    Loop, 50
-        {
-            sendKeybind("Up", 50)
-        }
 
-    
-    sendKeybind("Down")
-    sendKeybind("Down") 
-
+    resetSelectedPosition()
 
     Loop, % seedItems.MaxIndex()
     {
@@ -241,6 +257,63 @@ buySeeds(){
 
 }
 
+buyGears(){
+global
+  sendKeybind("2", 1000)
+
+  Click, Left, Down
+  Click, Left, Up
+  
+ 
+Sleep, 500
+sendKeybind("E", 2000)
+
+    Click, 1640, 425
+    Click, 1780, 430
+
+    Sleep, 2500
+    ; sendKeybind("\")
+    resetSelectedPosition()
+
+
+
+    Loop, % gearItems.MaxIndex()
+        {
+            
+            varName := "Gear" . A_Index
+            ToolTip, %varName%
+            if (%varName%) {
+    
+                buyItem()
+            
+            } else {
+                skipItem()
+    
+            }
+        }
+    
+    Loop, 50
+            {
+                sendKeybind("Up", 50)
+            }
+    
+            
+  
+        sendKeybind("Down")
+        sendKeybind("Down") 
+        sendKeybind("Enter")
+        sendKeybind("Enter")
+        sendKeybind("Up")
+        sendKeybind("Enter")
+        ;Return to garden
+        sendKeybind("Left")
+        sendKeybind("Enter")
+
+
+}
+
+
+
 startFunction() {
     Gui, Submit, NoHide
 
@@ -249,8 +322,13 @@ startFunction() {
     setupPosition()
     changeCameraMode()
 
-
+    resetCamera()
     buySeeds()
+
+
+    resetCamera()
+    buyGears()
+    
 
     Sleep, 100
     GuiControl,, Status, Status: Sequence Complete
