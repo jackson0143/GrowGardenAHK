@@ -4,16 +4,23 @@
 ; === Variables ===
 global toggle := false
 global interval := 100
-seedItems := ["Carrot Seed", "Strawberry Seed", "Blueberry Seed", "Orange Tulip"
-             , "Tomato Seed", "Corn Seed", "Daffodil Seed", "Watermelon Seed"
-             , "Pumpkin Seed", "Apple Seed", "Bamboo Seed", "Coconut Seed"
-             , "Cactus Seed", "Dragon Fruit Seed", "Mango Seed", "Grape Seed"
-             , "Mushroom Seed", "Pepper Seed", "Cacao Seed", "Beanstalk Seed", "Ember Lily", "Sugar Apple"] 
+; seedItems := ["Carrot Seed", "Strawberry Seed", "Blueberry Seed", "Orange Tulip"
+;              , "Tomato Seed", "Corn Seed", "Daffodil Seed", "Watermelon Seed"
+;              , "Pumpkin Seed", "Apple Seed", "Bamboo Seed", "Coconut Seed"
+;              , "Cactus Seed", "Dragon Fruit Seed", "Mango Seed", "Grape Seed"
+;              , "Mushroom Seed", "Pepper Seed", "Cacao Seed", "Beanstalk Seed", "Ember Lily", "Sugar Apple"] 
+seedItems := ["Carrot Seed", "Strawberry Seed", "Blueberry Seed"
+             , "Tomato Seed", "Cauliflower Seed", "Watermelon seed"
+             , "Green Apple Seed", "Avocado Seed", "Banana Seed", "Pineapple Seed"
+             , "Kiwi Seed", "Bell Pepper Seed", "Prickly Pear Seed", "Loquat Seed"
+             , "Feijoa Seed", "Sugar Apple Seed"] 
 
              
 
+; gearItems := ["Watering Can", "Trowel", "Recall Wrench", "Basic Sprinkler", "Advanced Sprinkler"
+;              , "Godly Sprinkler", "Lightning Rod", "Master Sprinkler", "Favorite Tool", "Harvest Tool", "Friendship Pot"]
 gearItems := ["Watering Can", "Trowel", "Recall Wrench", "Basic Sprinkler", "Advanced Sprinkler"
-             , "Godly Sprinkler", "Lightning Rod", "Master Sprinkler", "Favorite Tool", "Harvest Tool", "Friendship Pot"]
+             , "Godly Sprinkler", "Tanning Mirror","Master Sprinkler","Cleaning Spray", "Favorite Tool", "Harvest Tool", "Friendship Pot"]
 
 eggItems := ["Common Egg", "Uncommon Egg", "Rare Egg", "Legendary Egg", "Mythical Egg"
              , "Bug Egg"]
@@ -89,6 +96,32 @@ return
 
 
 ; === Functions ===
+findColour(x, y){
+    CoordMode, Pixel, Screen
+    PixelGetColor, colour, x, y
+    return colour
+}
+
+
+HideTooltip:
+ToolTip
+return
+
+hotbarControl(action, key) {
+    if (action = "select") {
+        Send, {%key%}
+    }
+    else if (action = "unselect") {
+        Send, {%key%}
+        Sleep, 200
+        Send, {%key%}
+    }
+    else if (action = "toggle") {
+        Send, {%key%}
+    }
+}
+
+
 createCheckboxLayout(itemArray, prefix) {
    
     global
@@ -177,6 +210,16 @@ resetSelectedPosition(){
         }
         sendKeybind("Down")
         sendKeybind("Down") 
+
+        sendKeybind("Enter",100)
+        sendKeybind("Enter",100)
+        
+        Sleep, 200  ; Wait for screen to update
+  
+        buttonColours := ["0x1DB31D", "0x26EE26"]
+        if (checkMultipleColours(buttonColours, 700, 610, 25)) {
+            sendKeybind("Enter")
+        }
 }
 resetCamera(){
     Sleep, 300
@@ -211,8 +254,7 @@ buyItem(){
 }
 
 skipItem(){
-    sendKeybind("Enter")
-    sendKeybind("Down")
+
     sendKeybind("Down")
 }
 
@@ -259,7 +301,7 @@ buySeeds(){
 
 buyGears(){
 global
-  sendKeybind("2", 1000)
+  hotbarControl("select", "2")
 
   Click, Left, Down
   Click, Left, Up
@@ -341,3 +383,21 @@ stopFunction() {
 ; === Handle close ===
 GuiClose:
 ExitApp
+
+checkMultipleColours(colourList, x, y, tolerance := 10) {
+
+    
+    CoordMode, Pixel, Screen
+    PixelGetColor, detectedColour, x, y
+    
+    for i, targetColour in colourList {
+        targetColourNum := targetColour
+        detectedColourNum := detectedColour
+        
+        if (Abs(targetColourNum - detectedColourNum) <= tolerance) {
+            return true
+        }
+    }
+    
+    return false
+}
