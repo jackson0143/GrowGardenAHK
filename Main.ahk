@@ -38,7 +38,7 @@ if (guiWidth < 300)
 if (guiHeight < 200)
     guiHeight := 200
 
-Gui, Add, Tab, vTabName w%guiWidth% h%guiHeight%, Seeds|Gears|Eggs|Settings
+Gui, Add, Tab, vTabName w%guiWidth% h%guiHeight%, Seeds|Gears|Eggs|Auto Honey|Settings
 Gui, Font, s10, Segoe UI 
 
 ; Scale accordingly to screen size, all customisable
@@ -71,6 +71,13 @@ createCheckboxLayout(gearItems, "Gear")
 Gui, Tab, Eggs
 Gui, Add, Text, x%textX% y%textY%, Select Eggs:
 createCheckboxLayout(eggItems, "Egg")
+
+; AUTO HONEY
+Gui, Tab, Auto Honey
+Gui, Add, Text, x%textX% y%textY%, Auto Honey:
+
+; Gui, Add, Button, gStartAutoHoney x%textX% y%buttonY% w%buttonWidth% h%buttonHeight%, Start (f4)
+
 
 ; SETTINGS
 Gui, Tab, Settings
@@ -177,6 +184,9 @@ rotateShops(){
     sendKeybind("Enter",120)
 }
 setupPosition(){
+    changeCameraMode()
+
+
     ; Get screen center coordinates
     centerX := A_ScreenWidth // 2
     centerY := A_ScreenHeight // 2
@@ -187,6 +197,14 @@ setupPosition(){
     ; Release right click
     Click, Right, Up
 
+
+    ; After facing down, zoom out and in to adjust FOV
+    Sleep, 300
+    resetCamera()
+    Sleep, 300
+
+    ; Perform the shop tp to adjust facing position
+    resetUINav()
     sendKeybind("\")
     sendKeybind("Right", 200)
     sendKeybind("Right", 200)
@@ -198,15 +216,18 @@ setupPosition(){
     Loop, 4 {
         rotateShops()
     }
+
+    ; now bring back the camera mode to default
+    changeCameraMode()
 }
 resetSelectedPosition(){
     Loop, 30
         {  
-            sendKeybind("Down", 50)
+            sendKeybind("Down", 30)
         }
-    Loop, 50
+    Loop, 40
         {
-            sendKeybind("Up", 50)
+            sendKeybind("Up", 30)
         }
         sendKeybind("Down")
         sendKeybind("Down") 
@@ -233,22 +254,69 @@ resetCamera(){
           {
               sendKeybind("WheelDown", 50)
           }
-    Sleep,300
+    Sleep,600
 }
 resetUINav(){
+    Sleep, 300
     sendKeybind("\")
     sendKeybind("\")
 }
 returnToGarden(){
-
+    resetUINav()
+    Loop, 4{
+        sendKeybind("Right")
+    }
+    sendKeybind("Enter")
+    resetUINav()
 }
 
+
+
+selectItemFromInventory(itemName, hotbarPosition)
+{
+    sendKeybind("~")
+    sendKeybind("Down")
+    sendKeybind("Down") 
+    sendKeybind("Down") 
+    sendKeybind("Enter")
+
+    Loop, 20{
+        sendKeybind("Backspace", 50)
+    }
+
+    ; Send each character of the itemName
+    Loop, Parse, itemName
+    {
+        sendKeybind(A_LoopField, 50)
+    }
+
+    sendKeybind("Enter")
+    Sleep, 500
+    sendKeybind("Left")
+    sendKeybind("Left")
+    ;Select item
+    sendKeybind("Right")
+    sendKeybind("Right")
+    sendKeybind("Enter")
+
+    sendKeybind("Down")
+    ;Place item according to hotbar position
+    ; We're at position 1, so move (hotbarPosition - 1) times
+    Loop, % hotbarPosition - 1
+    {
+        sendKeybind("Right")
+    }
+    sendKeybind("Enter")
+
+    sendKeybind("~")
+    sendKeybind("\")
+}
 buyItem(){
     sendKeybind("Enter")
     sendKeybind("Down")
-    Loop, 30
+    Loop, 20
         {
-            sendKeybind("Enter", 70)
+            sendKeybind("Enter", 30)
         }
     sendKeybind("Down")
 }
@@ -261,7 +329,17 @@ skipItem(){
 ; SEEDS
 buySeeds(){
     global
+
+
+    
+    sendKeybind("Right")
+    sendKeybind("Right")
+    sendKeybind("Right")
+    sendKeybind("Enter")
     Sleep, 500
+
+
+
     sendKeybind("e", 3000)
 
     resetSelectedPosition()
@@ -271,7 +349,7 @@ buySeeds(){
         ; Variable name is Seed1, Seed2, Seed3, corresponding to the checkboxes
         varName := "Seed" . A_Index
         if (%varName%) {
-
+            
             buyItem()
         
         } else {
@@ -280,7 +358,7 @@ buySeeds(){
         }
     }
 
-    Loop, 50
+    Loop, 35
         {
             sendKeybind("Up", 50)
         }
@@ -293,14 +371,16 @@ buySeeds(){
     sendKeybind("Enter")
     sendKeybind("Up")
     sendKeybind("Enter")
-    ;Return to garden
-    sendKeybind("Left")
-    sendKeybind("Enter")
+
 
 }
 
 buyGears(){
-global
+    
+
+    global
+
+    Sleep, 500
   hotbarControl("select", "2")
 
   Click, Left, Down
@@ -308,13 +388,15 @@ global
   
  
 Sleep, 500
+
+
 sendKeybind("E", 2000)
 
     Click, 1640, 425
     Click, 1780, 430
 
     Sleep, 2500
-    ; sendKeybind("\")
+    sendKeybind("\")
     resetSelectedPosition()
 
 
@@ -334,7 +416,7 @@ sendKeybind("E", 2000)
             }
         }
     
-    Loop, 50
+    Loop, 35
             {
                 sendKeybind("Up", 50)
             }
@@ -347,9 +429,6 @@ sendKeybind("E", 2000)
         sendKeybind("Enter")
         sendKeybind("Up")
         sendKeybind("Enter")
-        ;Return to garden
-        sendKeybind("Left")
-        sendKeybind("Enter")
 
 
 }
@@ -358,18 +437,29 @@ sendKeybind("E", 2000)
 
 startFunction() {
     Gui, Submit, NoHide
+    ; first, ensure the UI nav is off
+    Sleep, 500
+    resetUINav()
+    Sleep, 500
+    
+    ; Click at center of screen
+    centerX := A_ScreenWidth // 2
+    centerY := A_ScreenHeight // 2
+    Click, %centerX%, %centerY%
+    
+    Sleep, 500
 
-
-    changeCameraMode()
     setupPosition()
-    changeCameraMode()
+    returnToGarden()
 
-    resetCamera()
+    selectItemFromInventory("wrench",2)
+    Sleep, 5000
+
     buySeeds()
+    returnToGarden()
 
-
-    resetCamera()
     buyGears()
+    returnToGarden()
     
 
     Sleep, 100
