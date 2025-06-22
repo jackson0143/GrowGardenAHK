@@ -83,6 +83,9 @@ Gui, Add, Text, x%textX% y%textY%, Auto Honey:
 Gui, Tab, Settings
 Gui, Add, Text, x%textX% y%textY%, Settings:
 
+Gui, Add, Button, gSaveSettings x%textX% y%buttonY% w%buttonWidth% h%buttonHeight%, Save Settings
+
+Gui, Add, Button, gResetSettings x%editX% y%buttonY% w%buttonWidth% h%buttonHeight%, Reset Settings
 
 ; Add controls outside of tabs (buttons and status)
 Gui, Tab
@@ -90,6 +93,12 @@ Gui, Tab
 
 
 Gui, Show, w%guiWidth% h%guiHeight%, Grow a Garden Bot
+
+; Load settings if they exist
+if (FileExist("settings.ini")) {
+    LoadSettings()
+}
+
 return
 
 ; === Hotkeys ===
@@ -135,7 +144,7 @@ createCheckboxLayout(itemArray, prefix) {
     ;Column positions (for column 1 and column 2)
     column1X := textX
     column2X := textX + (guiWidth * 0.5)
-    maxCheckboxesPerColumn := 12  ; Adjust this number based on your GUI height
+    maxCheckboxesPerColumn := 12  
 
     Loop, % itemArray.MaxIndex()
     {
@@ -186,7 +195,7 @@ rotateShops(){
 setupPosition(){
     changeCameraMode()
 
-
+    Sleep, 500
     ; Get screen center coordinates
     centerX := A_ScreenWidth // 2
     centerY := A_ScreenHeight // 2
@@ -470,8 +479,87 @@ stopFunction() {
     GuiControl,, Status, Status: Stopped
 }
 
+SaveSettings() {
+    global seedItems, gearItems, eggItems
+    Gui, Submit, NoHide
+    
+    ; Save seed checkboxes
+    Loop, % seedItems.MaxIndex()
+    {
+        varName := "Seed" . A_Index
+        IniWrite, % %varName%, settings.ini, Seeds, %varName%
+    }
+    
+    ; Save gear checkboxes
+    Loop, % gearItems.MaxIndex()
+    {
+        varName := "Gear" . A_Index
+        IniWrite, % %varName%, settings.ini, Gears, %varName%
+    }
+    
+    ; Save egg checkboxes
+    Loop, % eggItems.MaxIndex()
+    {
+        varName := "Egg" . A_Index
+        IniWrite, % %varName%, settings.ini, Eggs, %varName%
+    }
+    
+
+}
+
+LoadSettings() {
+    global seedItems, gearItems, eggItems
+    Loop, % seedItems.MaxIndex()
+    {
+        varName := "Seed" . A_Index
+        IniRead, value, settings.ini, Seeds, %varName%, 0
+        GuiControl,, %varName%, %value%
+    }
+    
+
+    Loop, % gearItems.MaxIndex()
+    {
+        varName := "Gear" . A_Index
+        IniRead, value, settings.ini, Gears, %varName%, 0
+        GuiControl,, %varName%, %value%
+    }
+    
+    Loop, % eggItems.MaxIndex()
+    {
+        varName := "Egg" . A_Index
+        IniRead, value, settings.ini, Eggs, %varName%, 0
+        GuiControl,, %varName%, %value%
+    }
+    
+  
+}
+
+ResetSettings(){
+    global seedItems, gearItems, eggItems
+    ; Reset all checkboxes to unchecked
+    Loop, % seedItems.MaxIndex()
+    {
+        varName := "Seed" . A_Index
+        GuiControl,, %varName%, 0
+    }
+
+    Loop, % gearItems.MaxIndex()
+    {
+        varName := "Gear" . A_Index
+        GuiControl,, %varName%, 0
+    }
+
+    Loop, % eggItems.MaxIndex()
+    {
+        varName := "Egg" . A_Index
+        GuiControl,, %varName%, 0
+    }
+    MsgBox, Settings reset
+    SaveSettings()
+}
 ; === Handle close ===
 GuiClose:
+SaveSettings()
 ExitApp
 
 checkMultipleColours(colourList, x, y, tolerance := 10) {
