@@ -9,14 +9,15 @@ global interval := 100
 
 
 ; === SCHEDULED TASKS DEFINITION ===
-; Format: [interval_minutes, function_name, description]
-scheduledTasks := []
-scheduledTasks[1] := [5, "buySeeds", "Buy Seeds every 5 minutes"]
-scheduledTasks[2] := [5, "buyGears", "Buy Gears every 5 minutes"]
-scheduledTasks[3] := [30, "buyEggs", "Buy Eggs every 30 minutes"]
+
+global schedules := []
+schedules.push({ interval: 5, lastMinute: -1, funcName: "buySeeds" })
+schedules.push({ interval: 5, lastMinute: -1, funcName: "buyGears" })
+schedules.push({ interval: 30, lastMinute: -1, funcName: "buyEggs" })
 
 ; === QUEUE SYSTEM ===
-taskQueue := []  ; Queue to hold functions that need to run
+; taskQueue := []  ; Queue to hold functions that need to run
+; queueBusy := false  ; Flag to prevent adding tasks while processing
 seedItems := ["Carrot Seed", "Strawberry Seed", "Blueberry Seed", "Orange Tulip"
     , "Tomato Seed", "Daffodil Seed", "Watermelon Seed"
     , "Pumpkin Seed", "Apple Seed", "Bamboo Seed", "Coconut Seed"
@@ -507,51 +508,31 @@ navigateAndBuyEgg() {
 }
 
 ; Add functions to queue based on scheduled times
-addToQueue() {
-    global scheduledTasks, taskQueue
-    
-    ; Loop through each scheduled task
-    for index, task in scheduledTasks {
-        intervalMinutes := task[1]
-        functionName := task[2]
-        description := task[3]
-        
-        ; Check if this function should be added to queue now
-        if (shouldRunFunction(functionName, intervalMinutes)) {
-            ; Add to queue
-            taskQueue.Push([functionName, description])
-            ToolTip, Added %description% to queue at %A_Hour%:%A_Min%:%A_Sec%
-            SetTimer, HideTooltip, -2000
+CheckTimeTriggers() {
+    global schedules
+    nowMinute := A_Min + 0
+    nowSecond := A_Sec + 0
+
+    Loop, % schedules.Length()
+    {
+        index := A_Index
+        schedule := schedules[index]
+        if (nowMinute != schedule.lastMinute 
+            && Mod(nowMinute, schedule.interval) = 0 
+            && nowSecond < 2) 
+        {
+            schedules[index].lastMinute := nowMinute
+            ; Call the function by name
+            fn := schedule.funcName
+            %fn%()
+            ; Return to garden after each function
+            returnToGarden()
         }
     }
 }
 
-; Process the task queue
-processQueue() {
-    global taskQueue, isScriptRunning
-    
-    ; Don't run if script is still in setup phase
-    if (isScriptRunning) {
-        return
-    }
-    
-    ; Process all tasks in queue
-    while (taskQueue.Length() > 0) {
-        ; Get next task from queue
-        task := taskQueue.RemoveAt(1)
-        functionName := task[1]
-        description := task[2]
-        
-        ToolTip, Running %description% at %A_Hour%:%A_Min%:%A_Sec%
-        SetTimer, HideTooltip, -2000
-        
-        ; Execute the function
-        %functionName%()
-        
-        ; Return to garden after each function
-        returnToGarden()
-    }
-}
+
+
 
 
 
@@ -560,8 +541,8 @@ startFunction() {
     ; ================================================
     ; INITIALISING SETTINGS
     ; ================================================
-    global isScriptRunning
-    isScriptRunning := true
+    ; global isScriptRunning
+    ; isScriptRunning := true
 
     resetUINav()
     Sleep, 500
@@ -578,14 +559,18 @@ startFunction() {
     ; ================================================
     ; INITIAL SETUP COMPLETE - START SCHEDULING
     ; ================================================
-    isScriptRunning := false
+
+    runManualLoop()
+    ; isScriptRunning := false
     
-    ; Start the queue system timers
-    SetTimer, addToQueue, 60000  ; Check every minute to add tasks to queue
-    SetTimer, processQueue, 5000  ; Process queue every 5 seconds
-    
-    ToolTip, Initial setup complete. Scheduling started at %A_Hour%:%A_Min%:%A_Sec%
-    SetTimer, HideTooltip, -3000
+    ; Start the time trigger checker every second
+
+    ; SetTimer, CheckTimeTriggers, 1000
+    ; ToolTip, Initial setup complete. Scheduling started at %A_Hour%:%A_Min%:%A_Sec%
+    ; SetTimer, HideTooltip, -3000
+
+
+
 }
 
 stopFunction() {
@@ -643,7 +628,14 @@ LoadSettings() {
     }
 
 }
-
+runManualLoop(){
+    buySeeds()
+    returnToGarden()
+    buyGears()
+    returnToGarden()
+    buyEggs()
+    returnToGarden()
+}
 ResetSettings(){
     global seedItems, gearItems, eggItems
     ; Reset all checkboxes to unchecked
@@ -695,17 +687,6 @@ UpdateClock() {
     GuiControl,, ClockDisplay, %currentTime%
 }
 
-; === SCHEDULING LOGIC ===
-
-; Check if a function should run based on clock time intervals
-shouldRunFunction(functionName, intervalMinutes) {
-    ; Check if current minute is divisible by the interval
-    if (Mod(A_Min, intervalMinutes) = 0) {
-        return true
-    }
-    
-    return false
-}
 
 
 
