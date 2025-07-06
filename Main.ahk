@@ -4,23 +4,34 @@
 ; === Variables ===
 global toggle := false
 global interval := 100
-global isScriptRunning := false  ; script is currently running
-global autoModeEnabled := false   ; If we have actually started the script or not
-; seedItems := ["Carrot Seed", "Strawberry Seed", "Blueberry Seed", "Orange Tulip"
-;              , "Tomato Seed", "Corn Seed", "Daffodil Seed", "Watermelon Seed"
-;              , "Pumpkin Seed", "Apple Seed", "Bamboo Seed", "Coconut Seed"
-;              , "Cactus Seed", "Dragon Fruit Seed", "Mango Seed", "Grape Seed"
-;              , "Mushroom Seed", "Pepper Seed", "Cacao Seed", "Beanstalk Seed", "Ember Lily", "Sugar Apple"]
-seedItems := ["Carrot Seed", "Strawberry Seed", "Blueberry Seed"
-    , "Tomato Seed", "Cauliflower Seed", "Watermelon seed"
-    , "Green Apple Seed", "Avocado Seed", "Banana Seed", "Pineapple Seed"
-    , "Kiwi Seed", "Bell Pepper Seed", "Prickly Pear Seed", "Loquat Seed"
-    , "Feijoa Seed", "Sugar Apple Seed"]
+
+
+
+
+; === SCHEDULED TASKS DEFINITION ===
+; Format: [interval_minutes, function_name, description]
+scheduledTasks := []
+scheduledTasks[1] := [5, "buySeeds", "Buy Seeds every 5 minutes"]
+scheduledTasks[2] := [5, "buyGears", "Buy Gears every 5 minutes"]
+scheduledTasks[3] := [30, "buyEggs", "Buy Eggs every 30 minutes"]
+
+; === QUEUE SYSTEM ===
+taskQueue := []  ; Queue to hold functions that need to run
+seedItems := ["Carrot Seed", "Strawberry Seed", "Blueberry Seed", "Orange Tulip"
+    , "Tomato Seed", "Daffodil Seed", "Watermelon Seed"
+    , "Pumpkin Seed", "Apple Seed", "Bamboo Seed", "Coconut Seed"
+    , "Cactus Seed", "Dragon Fruit Seed", "Mango Seed", "Grape Seed"
+    , "Mushroom Seed", "Pepper Seed", "Cacao Seed", "Beanstalk Seed", "Ember Lily", "Sugar Apple", "Burning Bud"]
+; seedItems := ["Carrot Seed", "Strawberry Seed", "Blueberry Seed"
+;     , "Tomato Seed", "Cauliflower Seed", "Watermelon seed"
+;     , "Green Apple Seed", "Avocado Seed", "Banana Seed", "Pineapple Seed"
+;     , "Kiwi Seed", "Bell Pepper Seed", "Prickly Pear Seed", "Loquat Seed"
+;     , "Feijoa Seed", "Sugar Apple Seed"]
 
 ; gearItems := ["Watering Can", "Trowel", "Recall Wrench", "Basic Sprinkler", "Advanced Sprinkler"
 ;              , "Godly Sprinkler", "Lightning Rod", "Master Sprinkler", "Favorite Tool", "Harvest Tool", "Friendship Pot"]
 gearItems := ["Watering Can", "Trowel", "Recall Wrench", "Basic Sprinkler", "Advanced Sprinkler"
-    , "Godly Sprinkler", "Tanning Mirror","Master Sprinkler","Cleaning Spray", "Favorite Tool", "Harvest Tool", "Friendship Pot"]
+    , "Godly Sprinkler", "Magnifying Glass","Tanning Mirror","Master Sprinkler","Cleaning Spray", "Favorite Tool", "Harvest Tool", "Friendship Pot"]
 
 eggItems := ["Common Egg", "Uncommon Egg", "Rare Egg", "Legendary Egg", "Mythical Egg"
     , "Bug Egg"]
@@ -107,8 +118,7 @@ return
 
 ; === Hotkeys ===
 F1::
-    global autoModeEnabled
-    autoModeEnabled := true
+
 
     SaveSettings()
 
@@ -174,10 +184,19 @@ sendKeybind(keybind, delay := 250){
     if (keybind = "\") {
         Send, \
     }
+    else if (keybind = "`") {
+        Send, ``
+    }
     else {
         Send, {%keybind%}
     }
     Sleep, %delay%
+}
+
+holdKeybind(key, duration) {
+    Send, {%key% down}
+    Sleep, %duration%
+    Send, {%key% up}
 }
 
 changeCameraMode(){
@@ -190,12 +209,12 @@ changeCameraMode(){
 }
 
 rotateShops(){
-    sendKeybind("Right", 70)
-    sendKeybind("Right", 70)
-    sendKeybind("Enter ", 120)
-    sendKeybind("Left", 70)
-    sendKeybind("Left", 70)
-    sendKeybind("Enter",120)
+    sendKeybind("Right", 50)
+    sendKeybind("Right", 50)
+    sendKeybind("Enter ", 100)
+    sendKeybind("Left", 50)
+    sendKeybind("Left", 50)
+    sendKeybind("Enter",100)
 }
 setupPosition(){
     changeCameraMode()
@@ -205,31 +224,32 @@ setupPosition(){
     centerX := A_ScreenWidth // 2
     centerY := A_ScreenHeight // 2
 
+    ;Face down
     MouseMove, centerX, centerY
     Click, Right, Down
     MouseMove, centerX, centerY + 200, 10
-    ; Release right click
     Click, Right, Up
 
     ; After facing down, zoom out and in to adjust FOV
     Sleep, 300
     resetCamera()
-    Sleep, 300
+    Sleep, 800
 
     ; Perform the shop tp to adjust facing position
-    resetUINav()
+
     sendKeybind("\")
     sendKeybind("Right", 200)
     sendKeybind("Right", 200)
     sendKeybind("Right", 200)
     sendKeybind("Enter", 200)
     ; enter the loop
-
+    Sleep, 500
     ; Loop rotateShops 4 times
     Loop, 4 {
         rotateShops()
     }
 
+    resetUINav()
     ; now bring back the camera mode to default
     changeCameraMode()
 }
@@ -257,24 +277,33 @@ resetSelectedPosition(){
 }
 resetCamera(){
     Sleep, 300
-    Loop, 40
-    {
-        sendKeybind("WheelUp", 50)
-    }
 
-    Loop, 4
-    {
-        sendKeybind("WheelDown", 50)
-    }
-    Sleep,600
+    ; Zoom in for 2 seconds, then zoom out slightly
+    holdKeybind("i", 2000)
+    Sleep, 100
+    holdKeybind("o", 250)
+
+    Sleep, 500
 }
+
+/*
+Reset the default UI Nav position (where it is off)
+*/
 resetUINav(){
     Sleep, 300
     sendKeybind("\")
     sendKeybind("\")
+
+    Sleep, 500
+
+    ; Click at center of screen
+    centerX := A_ScreenWidth // 2
+    centerY := A_ScreenHeight // 2
+    Click, %centerX%, %centerY%
 }
 returnToGarden(){
     resetUINav()
+    sendKeybind("\")
     Loop, 4{
         sendKeybind("Right")
     }
@@ -283,8 +312,8 @@ returnToGarden(){
 }
 
 selectItemFromInventory(itemName, hotbarPosition)
-{
-    sendKeybind("~")
+{   sendKeybind("\")
+    sendKeybind("`")
     sendKeybind("Down")
     sendKeybind("Down")
     sendKeybind("Down")
@@ -304,12 +333,19 @@ selectItemFromInventory(itemName, hotbarPosition)
     Sleep, 500
     sendKeybind("Left")
     sendKeybind("Left")
+    sendKeybind("Left")
     ;Select item
     sendKeybind("Right")
     sendKeybind("Right")
     sendKeybind("Enter")
 
-    sendKeybind("Down")
+    ; move to the 'shop button to align position, then move down'
+    sendKeybind("Left")
+    sendKeybind("Left")
+    sendKeybind("Left")
+    Loop, 6 {
+        sendKeybind("Down")
+    }
     ;Place item according to hotbar position
     ; We're at position 1, so move (hotbarPosition - 1) times
     Loop, % hotbarPosition - 1
@@ -317,9 +353,8 @@ selectItemFromInventory(itemName, hotbarPosition)
         sendKeybind("Right")
     }
     sendKeybind("Enter")
-
-    sendKeybind("~")
-    sendKeybind("\")
+    sendKeybind("`")
+    resetUINav()
 }
 buyItem(){
     sendKeybind("Enter")
@@ -339,7 +374,7 @@ skipItem(){
 ; SEEDS
 buySeeds(){
     global
-
+    sendKeybind("\")
     sendKeybind("Right")
     sendKeybind("Right")
     sendKeybind("Right")
@@ -382,7 +417,7 @@ buySeeds(){
 buyGears(){
 
     global
-
+    
     Sleep, 500
     hotbarControl("select", "2")
 
@@ -471,50 +506,86 @@ navigateAndBuyEgg() {
     sendKeybind("\")
 }
 
-runBuyingLoop() {
-
-    buySeeds()
-    returnToGarden()
-
-    buyGears()
-    returnToGarden()
-
-    buyEggs()
-    returnToGarden()
-
+; Add functions to queue based on scheduled times
+addToQueue() {
+    global scheduledTasks, taskQueue
+    
+    ; Loop through each scheduled task
+    for index, task in scheduledTasks {
+        intervalMinutes := task[1]
+        functionName := task[2]
+        description := task[3]
+        
+        ; Check if this function should be added to queue now
+        if (shouldRunFunction(functionName, intervalMinutes)) {
+            ; Add to queue
+            taskQueue.Push([functionName, description])
+            ToolTip, Added %description% to queue at %A_Hour%:%A_Min%:%A_Sec%
+            SetTimer, HideTooltip, -2000
+        }
+    }
 }
+
+; Process the task queue
+processQueue() {
+    global taskQueue, isScriptRunning
+    
+    ; Don't run if script is still in setup phase
+    if (isScriptRunning) {
+        return
+    }
+    
+    ; Process all tasks in queue
+    while (taskQueue.Length() > 0) {
+        ; Get next task from queue
+        task := taskQueue.RemoveAt(1)
+        functionName := task[1]
+        description := task[2]
+        
+        ToolTip, Running %description% at %A_Hour%:%A_Min%:%A_Sec%
+        SetTimer, HideTooltip, -2000
+        
+        ; Execute the function
+        %functionName%()
+        
+        ; Return to garden after each function
+        returnToGarden()
+    }
+}
+
+
 
 startFunction() {
     Gui, Submit, NoHide
-    ; first, ensure the UI nav is off
-
+    ; ================================================
+    ; INITIALISING SETTINGS
+    ; ================================================
     global isScriptRunning
     isScriptRunning := true
-    Sleep, 500
+
     resetUINav()
-    Sleep, 500
-
-    ; Click at center of screen
-    centerX := A_ScreenWidth // 2
-    centerY := A_ScreenHeight // 2
-    Click, %centerX%, %centerY%
-
     Sleep, 500
 
     setupPosition()
     returnToGarden()
 
+    ; ================================================
+    ; INVENTORY WRENCH SELECTION
+    ; ================================================
     selectItemFromInventory("wrench",2)
-    Sleep, 2000
+    Sleep, 1000
 
-    ; Run the buying loop
-    runBuyingLoop()
-
+    ; ================================================
+    ; INITIAL SETUP COMPLETE - START SCHEDULING
+    ; ================================================
     isScriptRunning := false
-    Sleep, 2000
-
-    ; Start the scheduling timer when auto mode is enabled
-    SetTimer, CheckScheduledExecution, 1000
+    
+    ; Start the queue system timers
+    SetTimer, addToQueue, 60000  ; Check every minute to add tasks to queue
+    SetTimer, processQueue, 5000  ; Process queue every 5 seconds
+    
+    ToolTip, Initial setup complete. Scheduling started at %A_Hour%:%A_Min%:%A_Sec%
+    SetTimer, HideTooltip, -3000
 }
 
 stopFunction() {
@@ -624,30 +695,17 @@ UpdateClock() {
     GuiControl,, ClockDisplay, %currentTime%
 }
 
-CheckScheduledExecution() {
-    global autoModeEnabled
-    global isScriptRunning
-    ; Only check if auto mode is enabled
-    if (!autoModeEnabled) {
-        return
+; === SCHEDULING LOGIC ===
+
+; Check if a function should run based on clock time intervals
+shouldRunFunction(functionName, intervalMinutes) {
+    ; Check if current minute is divisible by the interval
+    if (Mod(A_Min, intervalMinutes) = 0) {
+        return true
     }
-
-    if (Mod(A_Min, 5) = 0 && A_Sec = 0) {
-        ; Don't run if script is already executing
-        if (isScriptRunning) {
-            ToolTip, Script already running, skipping scheduled execution
-            SetTimer, HideTooltip, -2000
-            return
-        }
-
-        ; It's exactly on a 5-minute mark (2:00, 2:05, 2:10, etc.)
-        ToolTip, Running scheduled buying loop at %A_Hour%:%A_Min%:%A_Sec%
-        SetTimer, HideTooltip, -2000
-
-        isScriptRunning := true
-        ; Run just the buying loop
-        runBuyingLoop()
-
-        isScriptRunning := false
-    }
+    
+    return false
 }
+
+
+
